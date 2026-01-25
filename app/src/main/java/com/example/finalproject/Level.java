@@ -12,10 +12,11 @@ public class Level {
     private float wScreen,hScreen;// size of the level
     private Context context;
 
-    private Bitmap picBlock,picPlayer,picRight,picLeft,picUp,picSpike;
+    private Bitmap picBlock,picPlayer,picRight,picLeft,picUp,picSpike,picPlatform;
 
     private ArrayList<Sprite> list_blocks =new ArrayList<>();
     private ArrayList<Sprite> list_Spikes =new ArrayList<>();
+    private ArrayList<MovingPlatform> list_platform=new ArrayList<>();
 
     private Player player;
 
@@ -53,6 +54,7 @@ public class Level {
         picLeft=BitmapFactory.decodeResource(context.getResources(), R.drawable.left_arrow);
         picUp=BitmapFactory.decodeResource(context.getResources(), R.drawable.up_arrow);
         picSpike=BitmapFactory.decodeResource(context.getResources(), R.drawable.spike_image);
+        picPlatform=BitmapFactory.decodeResource(context.getResources(), R.drawable.temp_platform);
 
         Right=new Sprite(Warr,50,Warr,Harr,picRight);
         Left=new Sprite(0,50,Warr,Harr,picLeft);
@@ -81,6 +83,7 @@ public class Level {
         arr[11][6]=3;
         arr[12][7]=1;
         arr[13][7]=1;
+        arr[10][5]=4;
 
 
         for (int i = 0; i< arrSizex; i++) {
@@ -93,6 +96,9 @@ public class Level {
                 }
                 if (arr[i][j]==2){
                    player= new Player(-6,3,Warr * i, Harr * j, Warr, Harr, picPlayer);
+                }
+                if (arr[i][j]==4){
+                   list_platform.add(new MovingPlatform(Warr * i, Harr * j, Warr*2, Harr/2, picPlatform,1200,2400));
                 }
             }
         }
@@ -124,6 +130,9 @@ public class Level {
     for (int j=0; j< list_Spikes.size(); j++){
         list_Spikes.get(j).draw(canvas);
     }
+    for (int k=0;k<list_platform.size();k++){
+        list_platform.get(k).draw(canvas);
+    }
     player.draw(canvas);
 
     Right.draw(canvas);
@@ -154,8 +163,9 @@ public class Level {
     public boolean isOnPlatform(){
         player.setY(player.getY()+5);
         ArrayList<Sprite> col_list=checkCollisionArray(player, list_blocks);
+        ArrayList<MovingPlatform> col_plat=checkCollisionArrayPlatform(player,list_platform);
         player.setY(player.getY()-5);
-        if (col_list.size()>0){
+        if (col_list.size()>0||col_plat.size()>0){
             return true;
         }
         else
@@ -165,38 +175,62 @@ public class Level {
     public void update() {
     resolveCollision();
     resolveLoss();
+    for (int i=0;i<list_platform.size();i++){
+        list_platform.get(i).MovePlatform();
+    }
     }
 
-    public void resolveCollision(){
-    player.setY(player.getY()+player.getVelocity_y());
-    player.setVelocity_y(player.getVelocity_y()+Gravity);
-        ArrayList <Sprite> col_list=checkCollisionArray(player, list_blocks);
-        if (col_list.size()>0){
-            Sprite collided =col_list.get(0);
-               if (player.getVelocity_y()>0){
+    public void resolveCollision() {
+        player.setY(player.getY() + player.getVelocity_y());
+        player.setVelocity_y(player.getVelocity_y() + Gravity);
+        ArrayList<Sprite> col_list = checkCollisionArray(player, list_blocks);
+        ArrayList<MovingPlatform> col_plat=checkCollisionArrayPlatform(player,list_platform);
+        if (col_list.size() > 0) {
+            Sprite collided = col_list.get(0);
+            if (player.getVelocity_y() > 0) {
                 player.setBottom(collided.getTop());
-            }
-            else if(player.getVelocity_y()<0){
+            } else if (player.getVelocity_y() < 0) {
                 player.setTop(collided.getBottom());
             }
             player.setVelocity_y(0);
         }
-        player.setX(player.getX()+player.getVelocity_x());
-
-        col_list=checkCollisionArray(player, list_blocks);
-        if (col_list.size()>0){
-            col_list=checkCollisionArray(player, list_blocks);
-            Sprite collided =col_list.get(0);
-            if (player.getVelocity_x()>0){
-                player.setRight(collided.getLeft());
+        if (col_plat.size() > 0) {
+            Sprite collided = col_plat.get(0);
+            if (player.getVelocity_y() > 0) {
+                player.setBottom(collided.getTop());
+            } else if (player.getVelocity_y() < 0) {
+                player.setTop(collided.getBottom());
             }
-            else if(player.getVelocity_x()<0){
+            player.setVelocity_y(0);
+        }
+
+        player.setX(player.getX() + player.getVelocity_x());
+
+        col_list = checkCollisionArray(player, list_blocks);
+        col_plat=checkCollisionArrayPlatform(player,list_platform);
+        if (col_list.size() > 0) {
+            col_list = checkCollisionArray(player, list_blocks);
+            Sprite collided = col_list.get(0);
+            if (player.getVelocity_x() > 0) {
+                player.setRight(collided.getLeft());
+            } else if (player.getVelocity_x() < 0) {
                 player.setLeft(collided.getRight());
             }
             player.setVelocity_x(0);
         }
 
+        if (col_plat.size() > 0) {
+            col_plat = checkCollisionArrayPlatform(player, list_platform);
+            Sprite collided = col_plat.get(0);
+            if (player.getVelocity_x() > 0) {
+                player.setRight(collided.getLeft());
+            } else if (player.getVelocity_x() < 0) {
+                player.setLeft(collided.getRight());
+            }
+            player.setVelocity_x(0);
+        }
     }
+
     public void resolveLoss(){
      ArrayList<Sprite> col_list=checkCollisionArray(player,list_Spikes);
      if (col_list.size()>0){
@@ -222,6 +256,16 @@ public class Level {
 
     public ArrayList<Sprite>checkCollisionArray(Sprite sprite,ArrayList<Sprite>list){
         ArrayList<Sprite> collision_list=new ArrayList<Sprite>();
+        for (int i=0;i<list.size();i++){
+            if (checkCollision(sprite,list.get(i))){
+                collision_list.add(list.get(i));
+            }
+        }
+        return collision_list;
+    }
+
+    public ArrayList<MovingPlatform>checkCollisionArrayPlatform(Sprite sprite,ArrayList<MovingPlatform>list){
+        ArrayList<MovingPlatform> collision_list=new ArrayList<MovingPlatform>();
         for (int i=0;i<list.size();i++){
             if (checkCollision(sprite,list.get(i))){
                 collision_list.add(list.get(i));
