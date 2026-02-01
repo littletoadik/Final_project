@@ -12,20 +12,31 @@ public class Level {
     private float wScreen,hScreen;// size of the level
     private Context context;
 
-    private Bitmap picBlock,picPlayer,picRight,picLeft,picUp,picSpike,picPlatform;
+    private Bitmap picBlock,picPlayer,picRight,picLeft,picUp,picSpike,picPlatform,picDoor;
+    private Bitmap picWinText,picWinRetry,picWinLeave;
 
     private ArrayList<Sprite> list_blocks =new ArrayList<>();
     private ArrayList<Sprite> list_Spikes =new ArrayList<>();
     private ArrayList<MovingPlatform> list_platform=new ArrayList<>();
 
     private Player player;
+    private Sprite door; // there will be only one exit in a level
+
+    private Sprite winText;
+    private Sprite winRetry,winLeave;
 
     private Sprite Right,Left,Up;
 
-    private int [][] arr;
+    private boolean isWin=false;
+
+    private int [][] arr;;
 
     private final float Warr=150;// width of one col
     private final float Harr=135;// height of one row
+
+    // temporary start of player will change later but the start of each level will be the same
+    private final float x_Start=Warr*4;
+    private final float y_start=Harr;
 
     private final float Gravity=0.6f;
 
@@ -48,6 +59,8 @@ public class Level {
         this.hScreen = hScreen;
         this.context = context;
 
+
+        // setup of the pictures of the sprites (will move this later to a class of its own)
         picBlock= BitmapFactory.decodeResource(context.getResources(),R.drawable.brick_wall);// init of the pic
         picPlayer=BitmapFactory.decodeResource(context.getResources(), R.drawable.den_tivbenkel);
         picRight=BitmapFactory.decodeResource(context.getResources(), R.drawable.right_arrow);
@@ -55,10 +68,20 @@ public class Level {
         picUp=BitmapFactory.decodeResource(context.getResources(), R.drawable.up_arrow);
         picSpike=BitmapFactory.decodeResource(context.getResources(), R.drawable.spike_image);
         picPlatform=BitmapFactory.decodeResource(context.getResources(), R.drawable.temp_platform);
+        picDoor= BitmapFactory.decodeResource(context.getResources(), R.drawable.door);
+        picWinRetry= BitmapFactory.decodeResource(context.getResources(), R.drawable.retry_text);
+        picWinText =BitmapFactory.decodeResource(context.getResources(), R.drawable.wintext);
+        picWinLeave=BitmapFactory.decodeResource(context.getResources(), R.drawable.leave_text);
+
+
+
 
         Right=new Sprite(Warr,50,Warr,Harr,picRight);
         Left=new Sprite(0,50,Warr,Harr,picLeft);
         Up=new Sprite(Warr*2,50,Warr,Harr,picUp);
+        winText = new Sprite (wScreen/2,hScreen/2-Harr,Warr*2,Harr*1.5f,picWinText);
+        winRetry = new Sprite (wScreen/2-Warr,hScreen/2+Harr*2,Warr,Harr/2,picWinRetry);
+        winLeave = new Sprite (wScreen/2+Warr,hScreen/2+Harr*2,Warr,Harr/2,picWinLeave);
 
         for (int i=0;i< arrSizex;i++){
             for (int j=0;j<arrSizey;j++){
@@ -67,6 +90,7 @@ public class Level {
         }
 
         arr[4][1]=2;
+
         arr[15][7]=1;
         arr[4][7]=1;
         arr[3][7]=1;
@@ -80,11 +104,24 @@ public class Level {
         arr[9][7]=1;
         arr[10][7]=1;
         arr[11][7]=1;
+
         arr[11][6]=3;
+
         arr[12][7]=1;
         arr[13][7]=1;
+        arr[14][7]=1;
+
         arr[10][5]=4;
 
+        arr [16][6]=5;
+
+        /**
+         * 1== block
+         * 2== player
+         * 3== spike
+         * 4== platform
+         * 5== door
+         */
 
         for (int i = 0; i< arrSizex; i++) {
             for (int j = 0; j < arrSizey; j++) {
@@ -100,6 +137,9 @@ public class Level {
                 if (arr[i][j]==4){
                    list_platform.add(new MovingPlatform(Warr * i, Harr * j, Warr*2, Harr/2, picPlatform,1200,2400));
                 }
+                if (arr[i][j]==5){
+                    door = new Sprite(Warr * i, Harr * j, Warr, Harr,picDoor);
+                }
             }
         }
 
@@ -108,20 +148,24 @@ public class Level {
 
     public void touchUpadte(float ex, float ey, int action) {
     if (action== MotionEvent.ACTION_DOWN) {
-        if (Right.contains(ex+offset_X, ey)) {
+        if (Right.contains(ex+offset_X, ey)&&!isWin) {
             player.setVelocity_x(Move_Speed);
         }
-        if (Left.contains(ex+offset_X,ey)){
+        if (Left.contains(ex+offset_X,ey)&&!isWin){
             player.setVelocity_x(-Move_Speed);
         }
-        if (Up.contains(ex+offset_X,ey)&&isOnPlatform()){
+        if (Up.contains(ex+offset_X,ey)&&isOnPlatform()&&!isWin){
             player.setVelocity_y(Jump_Speed);
+        }
+        if (winRetry.contains(ex+offset_X,ey)&&isWin){
+            resetLevel();
         }
     }
     else if(action==MotionEvent.ACTION_UP){
         player.setVelocity_x(0);
     }
     }
+
 
     public void draw (Canvas canvas){
     for (int i = 0; i< list_blocks.size(); i++){
@@ -133,13 +177,20 @@ public class Level {
     for (int k=0;k<list_platform.size();k++){
         list_platform.get(k).draw(canvas);
     }
+
+    if (isWin) {
+        winText.draw(canvas);
+        winLeave.draw(canvas);
+        winRetry.draw(canvas);
+    }
     player.draw(canvas);
+    door.draw(canvas);
 
     Right.draw(canvas);
     Left.draw(canvas);
     Up.draw(canvas);
-
     }
+
 
     public void moveScreen(Canvas canvas){
          float right_boundary= offset_X +canvas.getWidth()-Right_Margin;
@@ -148,6 +199,10 @@ public class Level {
              Right.setX(offset_X+Warr);
              Left.setX(offset_X);
              Up.setX(offset_X+Warr*2);
+
+             winText.setX(offset_X+wScreen/2);
+             winRetry.setX(offset_X+wScreen/2-Warr);
+             winLeave.setX(offset_X+wScreen/2+Warr);
          }
          float left_boundary=offset_X+Left_Margin;
          if (player.getLeft()<left_boundary){
@@ -155,10 +210,14 @@ public class Level {
              Right.setX(offset_X+Warr);
              Left.setX(offset_X);
              Up.setX(offset_X+Warr*2);
+
+             winText.setX(offset_X+wScreen/2);
+             winRetry.setX(offset_X+wScreen/2-Warr);
+             winLeave.setX(offset_X+wScreen/2+Warr);
          }
          canvas.translate(-offset_X,0);
-
     }
+
 
     public boolean isOnPlatform(){
         player.setY(player.getY()+5);
@@ -172,13 +231,36 @@ public class Level {
             return false;
     }
 
+
     public void update() {
     resolveCollision();
     resolveLoss();
     for (int i=0;i<list_platform.size();i++){
         list_platform.get(i).MovePlatform();
     }
+    if (checkCollision(player,door)){
+        isWin=true;
+        player.setVelocity_x(0);
+        player.setVelocity_y(0);
     }
+    }
+
+    private void resetLevel(){
+        isWin=false;
+        player.setX(x_Start);
+        player.setY(y_start);
+        offset_X=0;
+        Right.setX(offset_X+Warr);
+        Left.setX(offset_X);
+        Up.setX(offset_X+Warr*2);
+        winText.setX(offset_X+wScreen/2);
+        winRetry.setX(offset_X+wScreen/2-Warr);
+        winLeave.setX(offset_X+wScreen/2+Warr);
+
+        player.setVelocity_y(0);
+
+    }
+
 
     public void resolveCollision() {
         player.setY(player.getY() + player.getVelocity_y());
@@ -189,7 +271,8 @@ public class Level {
             Sprite collided = col_list.get(0);
             if (player.getVelocity_y() > 0) {
                 player.setBottom(collided.getTop());
-            } else if (player.getVelocity_y() < 0) {
+            }
+            else if (player.getVelocity_y() < 0) {
                 player.setTop(collided.getBottom());
             }
             player.setVelocity_y(0);
@@ -198,7 +281,8 @@ public class Level {
             Sprite collided = col_plat.get(0);
             if (player.getVelocity_y() > 0) {
                 player.setBottom(collided.getTop());
-            } else if (player.getVelocity_y() < 0) {
+            }
+            else if (player.getVelocity_y() < 0) {
                 player.setTop(collided.getBottom());
             }
             player.setVelocity_y(0);
@@ -234,13 +318,7 @@ public class Level {
     public void resolveLoss(){
      ArrayList<Sprite> col_list=checkCollisionArray(player,list_Spikes);
      if (col_list.size()>0){
-        player.setX(Warr*4);
-        player.setY(Harr);
-        offset_X=0;
-         Right.setX(offset_X+Warr);
-         Left.setX(offset_X);
-         Up.setX(offset_X+Warr*2);
-         player.setVelocity_y(0);
+      resetLevel();
      }
     }
 
@@ -273,7 +351,4 @@ public class Level {
         }
         return collision_list;
     }
-
-
-
 }
