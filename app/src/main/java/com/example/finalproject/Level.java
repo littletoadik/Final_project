@@ -45,6 +45,7 @@ public class Level {
 
     private final float Move_Speed=9;
     private final float Jump_Speed=-20;
+    private final float Platform_Speed=7;
 
     private float offset_X =0; // configures the top left corner
 
@@ -142,6 +143,7 @@ public class Level {
                 }
             }
         }
+        resetLevel();
 
 
     }
@@ -239,13 +241,24 @@ public class Level {
         list_platform.get(i).MovePlatform();
     }
     if (checkCollision(player,door)){
-        isWin=true;
-        player.setVelocity_x(0);
-        player.setVelocity_y(0);
+        resolveWin();
     }
     }
 
+    public void resolveWin(){
+        isWin=true;
+        player.setVelocity_x(0);
+        player.setVelocity_y(0);
+        for (int i=0;i<list_platform.size();i++){
+            list_platform.get(i).setVelocity_x(0);
+        }
+    }
+
     private void resetLevel(){
+        for (int i=0;i<list_platform.size();i++){
+            list_platform.get(i).setVelocity_x(Platform_Speed);
+        }
+
         isWin=false;
         player.setX(x_Start);
         player.setY(y_start);

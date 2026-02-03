@@ -10,7 +10,6 @@ public class MovingPlatform extends Sprite {
         super(x, y, w, h, pic);
         Left_border = left_border;
         Right_border = right_border;
-        velocity_x=7;
     }
     public void MovePlatform(){
         this.x+=velocity_x;
@@ -21,5 +20,9 @@ public class MovingPlatform extends Sprite {
         if (getLeft()<Left_border){
           velocity_x=-velocity_x;
         }
+    }
+
+    public void setVelocity_x(float velocity_x) {
+        this.velocity_x = velocity_x;
     }
 }
