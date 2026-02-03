@@ -271,7 +271,6 @@ public class Level {
         winLeave.setX(offset_X+wScreen/2+Warr);
 
         player.setVelocity_y(0);
-
     }
 
 
