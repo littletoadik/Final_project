@@ -6,10 +6,10 @@ public class MovingPlatform extends Sprite {
     private float velocity_x;
     private float Left_border,Right_border;
 
-    public MovingPlatform(float x, float y, float w, float h, Bitmap pic, float left_border, float right_border) {
+    public MovingPlatform(float x, float y, float w, float h, Bitmap pic) {
         super(x, y, w, h, pic);
-        Left_border = left_border;
-        Right_border = right_border;
+        Left_border = x;
+        Right_border = x+1200;
     }
     public void MovePlatform(){
         this.x+=velocity_x;

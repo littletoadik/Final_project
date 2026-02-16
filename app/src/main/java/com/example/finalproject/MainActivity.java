@@ -1,36 +1,53 @@
 package com.example.finalproject;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    FrameLayout frmMain;// to show the graphics
+    FrameLayout frmMain;
     private CustomView cv;
+     ArrayList<Integer> list =new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        startService(new Intent(this,PlayMusicService.class));
+
+        FirebaseDatabase db = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = db.getReference("Level1").child("0");
+        myRef.addValueEventListener(new ValueEventListener() {
+
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    for (DataSnapshot snap:snapshot.getChildren()){
+                        int i= snap.getValue(Integer.class);
+                        list.add(i);
+                    }
+                if (cv == null) {
+                    cv = new CustomView(MainActivity.this, frmMain.getWidth(), frmMain.getHeight(), list);
+                    frmMain.addView(cv);
+                } else {
+                    cv.invalidate(); //inshallah toda chat
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
         setContentView(R.layout.activity_main);
         frmMain=findViewById(R.id.frmMain);
-
-
     }
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {// You need to create this function because the mainActicty isn't immediately created
-        super.onWindowFocusChanged(hasFocus);
-        if (cv==null &&hasFocus){
-            cv =new CustomView(this,frmMain.getWidth(),frmMain.getHeight());//
-            frmMain.addView(cv);
-
-
-        }
     }
-}

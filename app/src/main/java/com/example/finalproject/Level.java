@@ -40,22 +40,36 @@ public class Level {
 
     private final float Gravity=0.6f;
 
-    private final int arrSizex =50;
+    private final int arrSizex=50;
     private final int arrSizey=8;
 
-    private final float Move_Speed=9;
+    private final float Move_Speed=12;
     private final float Jump_Speed=-20;
     private final float Platform_Speed=7;
 
     private float offset_X =0; // configures the top left corner
 
-    private final float Right_Margin=400;
+    private final float Right_Margin=600;
     private final float Left_Margin=60;
 
 
 
-    public Level(Context context, float wScreen, float hScreen) {
-        arr= new int[arrSizex][arrSizey];
+    public Level(Context context, float wScreen, float hScreen,ArrayList<Integer>list) {
+      arr= new int[arrSizex][arrSizey];
+
+      int row=0;
+      int col=0;
+      for(int i=0;i<list.size();i++){
+          arr[row][col]=list.get(i);
+          row++;
+          if (row==arr.length){
+              col++;
+              row=0;
+          }
+
+      }
+
+
         this.wScreen = wScreen;
         this.hScreen = hScreen;
         this.context = context;
@@ -83,38 +97,8 @@ public class Level {
         winText = new Sprite (wScreen/2,hScreen/2-Harr,Warr*2,Harr*1.5f,picWinText);
         winRetry = new Sprite (wScreen/2-Warr,hScreen/2+Harr*2,Warr,Harr/2,picWinRetry);
         winLeave = new Sprite (wScreen/2+Warr,hScreen/2+Harr*2,Warr,Harr/2,picWinLeave);
+        arr[0][1]=2;
 
-        for (int i=0;i< arrSizex;i++){
-            for (int j=0;j<arrSizey;j++){
-                arr[i][j]=0;
-            }
-        }
-
-        arr[4][1]=2;
-
-        arr[15][7]=1;
-        arr[4][7]=1;
-        arr[3][7]=1;
-        arr[5][7]=1;
-        arr[3][6]=1;
-        arr[16][7]=1;
-        arr[4][4]=1;
-        arr[6][7]=1;
-        arr[7][7]=1;
-        arr[8][7]=1;
-        arr[9][7]=1;
-        arr[10][7]=1;
-        arr[11][7]=1;
-
-        arr[11][6]=3;
-
-        arr[12][7]=1;
-        arr[13][7]=1;
-        arr[14][7]=1;
-
-        arr[10][5]=4;
-
-        arr [16][6]=5;
 
         /**
          * 1== block
@@ -136,7 +120,7 @@ public class Level {
                    player= new Player(-6,3,Warr * i, Harr * j, Warr, Harr, picPlayer);
                 }
                 if (arr[i][j]==4){
-                   list_platform.add(new MovingPlatform(Warr * i, Harr * j, Warr*2, Harr/2, picPlatform,1200,2400));
+                   list_platform.add(new MovingPlatform(Warr * i, Harr * j, Warr*2, Harr/2, picPlatform));
                 }
                 if (arr[i][j]==5){
                     door = new Sprite(Warr * i, Harr * j, Warr, Harr,picDoor);

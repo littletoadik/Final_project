@@ -7,21 +7,27 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.ArrayList;
+
 public class CustomView extends SurfaceView implements Runnable{// runnable for threds,surface view to show graphics
     private Context context;
     private Thread thread;
     private float wScreen, hScreen;// screen size
     private SurfaceHolder holder;
+    //private int [][] list= new int[7][8];
+    ArrayList<Integer> test=new ArrayList<>();
     private Level level;// game logic
     private Canvas canvas;// if there are problems of the app crashing this might be the problem
 
 
-    public CustomView(Context context,float wScreen,float hScreen) {
+    public CustomView(Context context, float wScreen, float hScreen, ArrayList<Integer> test) {
         super(context);
-        level=new Level(context,wScreen,hScreen);
+
+        level=new Level(context,wScreen,hScreen,test);
         holder=getHolder();
         thread=new Thread(this);
         thread.start();
+
     }
 
     public void drawSurface(){
@@ -33,9 +39,6 @@ public class CustomView extends SurfaceView implements Runnable{// runnable for 
             holder.unlockCanvasAndPost(canvas);
         }
     }
-
-
-
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
